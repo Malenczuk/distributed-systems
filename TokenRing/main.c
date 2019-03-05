@@ -7,6 +7,8 @@
 #include <string.h>
 #include <pthread.h>
 #include <signal.h>
+#include <popt.h>
+#include "config.c"
 
 #define MCAST_GRP "224.1.1.1"
 #define MCAST_PORT 5007
@@ -24,16 +26,16 @@ typedef struct {
     char data[1024];
 } token;
 
-char ID[] = "Elaa";
-uint16_t LOCAL_PORT = 4002;
-char OUT_IP[] = "127.0.0.1";
-uint16_t OUT_PORT = 4001;
+//char ID[] = "Elaa";
+//uint16_t LOCAL_PORT = 4002;
+//char OUT_IP[] = "127.0.0.1";
+//uint16_t OUT_PORT = 4001;
 
 int SOCKET;
 
 token messagess[16];
 int msgs = 0;
-int end = 0;
+int end = -1;
 
 
 void send_multicast(void *message, int size) {
@@ -65,7 +67,7 @@ void send_token(token token) {
 struct sockaddr_in recieve_token(token *token) {
     struct sockaddr_in addr;
     int addrlen = sizeof(addr);
-    if (recvfrom(SOCKET, token, sizeof(*token), 0, (struct sockaddr *) &addr, &addrlen) !=
+    if (recvfrom(SOCKET, token, sizeof(*token), 0, (struct sockaddr *) &addr, (socklen_t *) &addrlen) !=
         sizeof(*token)) {
         perror("recvfrom");
         exit(1);
@@ -96,19 +98,6 @@ void init() {
         perror("bind");
         exit(1);
     }
-
-
-    char myIP[16];
-    unsigned int myPort;
-    bzero(&addr, sizeof(addr));
-    int len = sizeof(addr);
-    getsockname(SOCKET, (struct sockaddr *) &addr, &len);
-    inet_ntop(AF_INET, &addr.sin_addr, myIP, sizeof(myIP));
-    myPort = ntohs(addr.sin_port);
-
-    printf("Local ip address: %s\n", myIP);
-    printf("Local port : %u\n", myPort);
-
 }
 
 void conn() {
@@ -136,7 +125,6 @@ void disconn() {
 
 void sigHandler() {
     end = 1;
-    fprintf(stderr, "\nSIGINT\n");
 }
 
 int remap(token token) {
@@ -153,8 +141,8 @@ int remap(token token) {
 }
 
 int main(int argc, char **argv) {
-    signal(SIGINT, sigHandler);
-    atexit(sigHandler);
+
+    load_arguments(argc, argv);
 
     init_multicast();
     send_multicast(ID, strlen(ID));
@@ -162,7 +150,7 @@ int main(int argc, char **argv) {
     init();
 
     conn();
-    if (argc > 1) {
+    if (TOKEN) {
         token token;
         memset(&token, 0, sizeof(token));
         token.token = DATA;
@@ -182,6 +170,11 @@ int main(int argc, char **argv) {
         struct sockaddr_in addr = recieve_token(&token);
         switch (token.token) {
             case EMPTY:
+                if (end == -1){
+                    signal(SIGTSTP, sigHandler);
+                    atexit(sigHandler);
+                    end = 0;
+                }
                 printf("\n");
                 if (msgs > 0) {
                     token = messagess[0];
@@ -189,7 +182,7 @@ int main(int argc, char **argv) {
                         messagess[i - 1] = messagess[i];
                     }
                 }
-                if(end) disconn();
+                if(end == 1) disconn();
                 send_token(token);
                 break;
             case DATA:

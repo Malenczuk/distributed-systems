@@ -6,7 +6,7 @@ most_recent_source := $(shell ls -At $(wildcard $(c_cpp_wildcards)) | head -1)
 
 BOOST_LIBS += -lboost_filesystem -lboost_system -lboost_regex \
 	      -lboost_date_time -lboost_chrono -lboost_timer -lboost_iostreams \
-	      -lboost_thread -lboost_coroutine
+	      -lboost_thread -lboost_coroutine -lpopt
 
 CPPFLAGS += -I. -Iinclude -I../include
 CFLAGS += -pthread -Wall -Wextra -ggdb3 -O0
