@@ -3,11 +3,11 @@
 #include <popt.h>
 #include <netinet/in.h>
 
-enum {
+typedef enum {
     UDP = 1, TCP = 2
-};
+}protocol;
 
-char PROTOCOL = -1;
+protocol PROTOCOL = -1;
 char *ID = NULL;
 char *OUT_IP = NULL;
 uint16_t LOCAL_PORT = 0;
