@@ -11,7 +11,7 @@
 #include "config.c"
 
 int MCAST_SOCKET;
-int SOCKET;
+int SOCKET[2];
 pthread_t accept_thread = NULL;
 
 token messagess[16];
@@ -41,6 +41,7 @@ int main(int argc, char **argv) {
     tokenring_connect();
     if (TOKEN) send_token(empty_token());
 
+    sleep(1);
     loop();
 
     return 0;
@@ -99,7 +100,6 @@ void handle_connect(token token, struct sockaddr_in addr) {
     struct swap *swap = (struct swap *) token.data;
     token.token = REMAP;
     strcpy(swap->new_ip, inet_ntoa(addr.sin_addr));
-    swap->new_port = ntohs(addr.sin_port);
 
     if (!remap(token))
         memcpy(&messagess[msgs++], &token, sizeof(token));
@@ -109,7 +109,6 @@ void handle_disconnect(token token, struct sockaddr_in addr) {
     struct swap *swap = (struct swap *) token.data;
     token.token = REMAP;
     strcpy(swap->old_ip, inet_ntoa(addr.sin_addr));
-    swap->old_port = ntohs(addr.sin_port);
 
     handle_remap(token, addr);
 }
@@ -168,7 +167,9 @@ void print_token(token token) {
     printf("TYPE : %s \t\tTTL : %d\n", typeNames[token.token], token.TTL);
     printf("SRC  : '%s'\n", token.source);
     printf("DST  : '%s'\n", token.destination);
-    printf("DATA : '%s'\n", token.data);
+    printf("DATA : '");
+    fwrite(token.data, 1025, 1, stdout);
+    printf("'\n");
 }
 
 void tokenring_connect() {
@@ -178,6 +179,7 @@ void tokenring_connect() {
     struct swap swap;
     strcpy(swap.old_ip, OUT_IP);
     swap.old_port = OUT_PORT;
+    swap.new_port = LOCAL_PORT;
     token token = create_token(CONNECT, 1, ID, ID, &swap, sizeof(swap));
     send_token(token);
 }
@@ -186,6 +188,7 @@ void tokenring_disconnect() {
     struct swap swap;
     strcpy(swap.new_ip, OUT_IP);
     swap.new_port = OUT_PORT;
+    swap.old_port = LOCAL_PORT;
     token token = create_token(DISCONNECT, 1, ID, ID, &swap, sizeof(swap));
     send_token(token);
 
@@ -211,7 +214,7 @@ void init(int argc, char **argv) {
 }
 
 void init_TCP() {
-    if ((SOCKET = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+    if ((SOCKET[0] = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
         perror("socket");
         exit(1);
     }
@@ -222,22 +225,37 @@ void init_TCP() {
     addr.sin_family = AF_INET;
     addr.sin_addr.s_addr = htonl(INADDR_ANY);
     addr.sin_port = htons(LOCAL_PORT);
-    if (bind(SOCKET, (const struct sockaddr *) &addr, sizeof(addr)) == -1) {
+    if (bind(SOCKET[0], (const struct sockaddr *) &addr, sizeof(addr)) == -1) {
         perror("bind");
         exit(1);
     }
 
-    if (listen(SOCKET, 16)) {
+    if (listen(SOCKET[0], 16)) {
         perror("listen");
         exit(1);
     }
 
     pthread_create(&accept_thread, NULL, accept_TCP, NULL);
+
+    if ((SOCKET[1] = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+        perror("socket");
+        exit(1);
+    }
+
+    bzero(&addr, sizeof(addr));
+
+    addr.sin_family = AF_INET;
+    addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    addr.sin_port = 0;
+    if (bind(SOCKET[1], (const struct sockaddr *) &addr, sizeof(addr)) == -1) {
+        perror("bind");
+        exit(1);
+    }
 }
 
 void *accept_TCP(void *x_void_ptr){
     while(1) {
-        if(accept(SOCKET, NULL, NULL) == -1){
+        if(SOCKET[0] = (SOCKET[0], NULL, NULL) == -1){
             perror("accept");
             exit(1);
         }
@@ -245,19 +263,21 @@ void *accept_TCP(void *x_void_ptr){
 }
 
 void connect_TCP(){
+    printf("Connecting");
+
     struct sockaddr_in addr;
     bzero(&addr, sizeof(addr));
     addr.sin_family = AF_INET;
     addr.sin_addr.s_addr = inet_addr(OUT_IP);
     addr.sin_port = htons(OUT_PORT);
-    if(connect(SOCKET, (const struct sockaddr *) &addr, sizeof(addr)) != 0 ){
+    if(connect(SOCKET[1], (const struct sockaddr *) &addr, sizeof(addr)) != 0 ){
         perror("connect");
         exit(1);
     }
 }
 
 void init_UDP() {
-    if ((SOCKET = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+    if ((SOCKET[0] = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
         perror("socket");
         exit(1);
     }
@@ -268,7 +288,7 @@ void init_UDP() {
     addr.sin_family = AF_INET;
     addr.sin_addr.s_addr = htonl(INADDR_ANY);
     addr.sin_port = htons(LOCAL_PORT);
-    if (bind(SOCKET, (const struct sockaddr *) &addr, sizeof(addr)) == -1) {
+    if (bind(SOCKET[0], (const struct sockaddr *) &addr, sizeof(addr)) == -1) {
         perror("bind");
         exit(1);
     }
@@ -289,34 +309,9 @@ void send_token(token token) {
 }
 
 struct sockaddr_in recieve_token(token *token) {
-    switch (PROTOCOL) {
-        case UDP:
-            return recieve_token_UDP(token);
-        case TCP:
-            return recieve_token_TCP(token);
-        default:
-            printf("Unexpected error with selected protocol\n");
-            exit(1);
-    }
-}
-
-void send_token_TCP(token token) {}
-
-struct sockaddr_in recieve_token_TCP(token *token) {
-    struct sockaddr_in addr;
-
-    if (read(SOCKET, &token, sizeof(token)) != sizeof(*token)) {
-        perror("read");
-        exit(1);
-    }
-
-    return addr;
-}
-
-struct sockaddr_in recieve_token_UDP(token *token) {
     struct sockaddr_in addr;
     int addrlen = sizeof(addr);
-    if (recvfrom(SOCKET, token, sizeof(*token), 0, (struct sockaddr *) &addr, (socklen_t *) &addrlen) !=
+    if (recvfrom(SOCKET[0], token, sizeof(*token), 0, (struct sockaddr *) &addr, (socklen_t *) &addrlen) !=
         sizeof(*token)) {
         perror("recvfrom");
         exit(1);
@@ -326,6 +321,13 @@ struct sockaddr_in recieve_token_UDP(token *token) {
     return addr;
 }
 
+void send_token_TCP(token token) {
+    if(send(SOCKET[1], &token, sizeof(token), 0) != sizeof(token)) {
+        perror("send");
+        exit(1);
+    }
+}
+
 void send_token_UDP(token token) {
     struct sockaddr_in addr;
     bzero(&addr, sizeof(addr));
@@ -333,7 +335,7 @@ void send_token_UDP(token token) {
     addr.sin_addr.s_addr = inet_addr(OUT_IP);
     addr.sin_port = htons(OUT_PORT);
 
-    if (sendto(SOCKET, &token, sizeof(token), 0, (const struct sockaddr *) &addr, sizeof(addr)) != sizeof(token)) {
+    if (sendto(SOCKET[0], &token, sizeof(token), 0, (const struct sockaddr *) &addr, sizeof(addr)) != sizeof(token)) {
         perror("write");
         exit(1);
     }

@@ -69,10 +69,6 @@ struct sockaddr_in recieve_token(token *token);
 
 void send_token_TCP(token token);
 
-struct sockaddr_in recieve_token_TCP(token *token);
-
 void send_token_UDP(token token);
 
-struct sockaddr_in recieve_token_UDP(token *token);
-
-#endif //TOKENRING_TOKENRING_H
+ #endif //TOKENRING_TOKENRING_H

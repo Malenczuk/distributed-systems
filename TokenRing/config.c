@@ -86,8 +86,8 @@ void load_arguments(int argc, char **argv) {
         printf("Enter PORT [-p|--port]\n");
     if ((protocol == 0) & (err |= protocol == 0))
         printf("Chose only one protocol [-UDP] | [-TCP]\n");
-    if ((protocol == 3) & (err |= protocol == 3))
-        printf("Chose one protocol [-UDP] | [-TCP]\n");
+//    if ((protocol == 3) & (err |= protocol == 3))
+//        printf("Chose one protocol [-UDP] | [-TCP]\n");
     if (err) {
         poptPrintUsage(pc, stderr, 0);
         exit(1);
