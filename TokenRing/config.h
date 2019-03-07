@@ -1,11 +1,6 @@
 #ifndef TOKENRING_CONFIG_H
 #define TOKENRING_CONFIG_H
 
-typedef enum {
-    UDP = 1, TCP = 2
-}protocol;
-
-protocol PROTOCOL = -1;
 char *ID = NULL;
 char *OUT_IP = NULL;
 uint16_t LOCAL_PORT = 0;

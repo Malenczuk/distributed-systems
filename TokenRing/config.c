@@ -5,7 +5,6 @@
 #include "config.h"
 
 void load_arguments(int argc, char **argv) {
-    int protocol = 3;
     char *id = NULL;
     char *out_ip = NULL;
     int local_port = 0;
@@ -19,8 +18,6 @@ void load_arguments(int argc, char **argv) {
             {"port", 'p', POPT_ARG_INT, &out_port, 0, "", ""},
             {"local-port", 'l', POPT_ARG_INT, &local_port, 0, "", ""},
             {"token", 't', POPT_ARG_NONE, &token, 0, "", ""},
-            {"UDP", 0, POPT_ARG_VAL | POPT_ARGFLAG_AND | POPT_ARGFLAG_ONEDASH, &protocol, 1, "", ""},
-            {"TCP", 0, POPT_ARG_VAL | POPT_ARGFLAG_AND | POPT_ARGFLAG_ONEDASH, &protocol, 2, "", ""},
             POPT_AUTOHELP
             POPT_TABLEEND
     };
@@ -74,27 +71,16 @@ void load_arguments(int argc, char **argv) {
         printf("Enter IP [-i|--ip]\n");
     if ((out_port == 0) & (err |= out_port == 0))
         printf("Enter PORT [-p|--port]\n");
-    if ((protocol == 0) & (err |= protocol == 0))
-        printf("Chose only one protocol [-UDP] | [-TCP]\n");
-//    if ((protocol == 3) & (err |= protocol == 3))
-//        printf("Chose one protocol [-UDP] | [-TCP]\n");
+    if ((local_port == 0) & (err |= local_port == 0))
+        printf("Enter LOCAL PORT [-l|--local-port]\n");
     if (err) {
         poptPrintUsage(pc, stderr, 0);
         exit(1);
     }
 
-    PROTOCOL = protocol == 1 ? UDP : TCP;
     ID = id;
     OUT_IP = out_ip;
     LOCAL_PORT = local_port;
     OUT_PORT = out_port;
     TOKEN = token;
-
-    // Done. Print final result.
-//    printf("--- end of popt_basic ---\n");
-//    printf("final value of ID: %s\n", ID);
-//    printf("final value of ip: %s\n", OUT_IP);
-//    printf("final value of port: %d\n", OUT_PORT);
-//    printf("final value of local-port: %d\n", LOCAL_PORT);
-//    printf("final value of protocol: %d\n", PROTOCOL);
 }

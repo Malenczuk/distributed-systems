@@ -6,7 +6,6 @@
 
 #define FAILURE_EXIT(code, perr, format, ...) { if(format) fprintf(stdout, format, ##__VA_ARGS__); if(perr) perror(perr); exit(code);}
 
-
 int MCAST_SOCKET = 0;
 int SOCKET[2] = {0, 0};
 pthread_t command;
