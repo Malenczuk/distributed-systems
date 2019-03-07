@@ -3,6 +3,11 @@
 import socket
 import struct
 import datetime
+import sys
+
+file = 'log.txt'
+if len(sys.argv) > 1:
+    file = sys.argv[1]
 
 MCAST_GRP = '224.1.1.1'
 MCAST_PORT = 5007
@@ -16,6 +21,6 @@ sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
 
 while True:
     data, addr = sock.recvfrom(1024)
-    print("%s : %s\n" % (datetime.datetime.now(), data))
+    print("%s : %s\n" % (str(datetime.datetime.now())[:-7], data.decode('utf-8')))
     with open("log.txt", "a+") as log_file:
-        log_file.write("%s : %s\n" % (datetime.datetime.now(), data))
+        log_file.write("%s : %s\n" % (str(datetime.datetime.now())[:-7], data.decode('utf-8')))
