@@ -1,8 +1,7 @@
 #ifndef TOKENRING_TOKENRINGTCP_H
 #define TOKENRING_TOKENRINGTCP_H
 
-#define MCAST_GRP "224.1.1.1"
-#define MCAST_PORT 5007
+int epoll;
 
 void handle_token(int socket);
 
@@ -26,9 +25,13 @@ int reconnect(token token);
 
 void handle_connection(int socket);
 
+void remove_socket(int socket);
+
 void connect_session();
 
 void connect_tokenring();
+
+void disconnect_tokenring();
 
 void init(int argc, char **argv);
 

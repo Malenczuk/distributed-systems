@@ -1,17 +1,5 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <libnet.h>
-#include <pthread.h>
-#include <sys/epoll.h>
-#include "config.c"
 #include "TokenRing.c"
 #include "TokenRingTCP.h"
-
-int epoll;
 
 void sigHandler() {
     FAILURE_EXIT(2, NULL, "\nSIGINT\n")
@@ -19,8 +7,8 @@ void sigHandler() {
 
 int main(int argc, char **argv) {
     init(argc, argv);
-//    connect_tokenring();
 
+    connect_tokenring();
     if(TOKEN) send_token(empty_token());
 
     struct epoll_event event;
@@ -36,11 +24,14 @@ int main(int argc, char **argv) {
 }
 
 void handle_token(int socket) {
-    token token;
+    token token = empty_token();
     struct sockaddr_in addr = recieve_token(socket, &token);
-    sleep(1);
-    print_token(token);
 
+    if(!addr.sin_port)
+        return;
+
+    send_multicast(ID, strlen(ID));
+    sleep(1);
     switch (token.token) {
         case EMPTY:
             handle_empty();
@@ -69,13 +60,15 @@ void send_token(token token) {
     }
 }
 
-struct sockaddr_in recieve_token(int socket, token *token) {
-    if (read(socket, &token, sizeof(token)) != sizeof(token)) {
-        FAILURE_EXIT(1, "read", "\nError : Could not read token\n")
-    }
+struct sockaddr_in recieve_token(int socket, token *token){
     struct sockaddr_in addr;
     bzero(&addr, sizeof(addr));
     int addrlen = sizeof(addr);
+
+    if ((read(socket, token, sizeof(*token))) != sizeof(*token)) {
+        remove_socket(socket);
+        return addr;
+    }
     getpeername(socket, (struct sockaddr *) &addr, (socklen_t *) &addrlen);
 
     return addr;
@@ -119,7 +112,7 @@ void handle_data(token token) {
         token.token = CONFIRM;
     } else if (strcmp(token.source, ID) == 0) {
         if ((token.TTL -= 1) <= 0) {
-            printf("TTL expired\n");
+            printf("Message wasn't delivered\n");
             token = empty_token();
         }
     }
@@ -129,6 +122,7 @@ void handle_data(token token) {
 
 void handle_confirm(token token) {
     if (strcmp(token.source, ID) == 0) {
+        printf("Message was delivered successfully\n");
         token = empty_token();
     }
     send_token(token);
@@ -153,7 +147,6 @@ int reconnect(token token) {
 }
 
 void handle_connection(int socket) {
-    printf("handle_new_connection\n");
     int client;
     if ((client = accept(socket, NULL, NULL)) == -1) {
         FAILURE_EXIT(1, "accept", "\nError : Could not accept new client\n")
@@ -165,6 +158,20 @@ void handle_connection(int socket) {
 
     if (epoll_ctl(epoll, EPOLL_CTL_ADD, client, &event) == -1) {
         FAILURE_EXIT(1, "epoll_ctl", "\nError : Could not add new client to epoll\n")
+    }
+}
+
+void remove_socket(int socket){
+    if (epoll_ctl(epoll, EPOLL_CTL_DEL, socket, NULL) == -1){
+        FAILURE_EXIT(1, "epoll_ctl", "\nError : Could not remove client's socket from epoll\n")
+    }
+
+    if (shutdown(socket, SHUT_RDWR) == -1) {
+        FAILURE_EXIT(1, "shutdown", "\nError : Could not shutdown client's socket\n")
+    }
+
+    if (close(socket) == -1) {
+        FAILURE_EXIT(1, "close", "\nError : Could not close client's socket\n")
     }
 }
 
@@ -202,6 +209,18 @@ void connect_tokenring() {
     send_token(token);
 }
 
+void disconnect_tokenring() {
+    struct swap swap;
+    bzero(&swap, sizeof(swap));
+    strcpy(swap.new_ip, OUT_IP);
+    swap.new_port = OUT_PORT;
+    swap.old_port = LOCAL_PORT;
+    token token = create_token(DISCONNECT, 1, ID, ID, &swap, sizeof(swap));
+    send_token(token);
+
+    exit(1);
+}
+
 void init(int argc, char **argv){
     load_arguments(argc, argv);
 
@@ -210,6 +229,8 @@ void init(int argc, char **argv){
     if (atexit(del) == -1) FAILURE_EXIT(1, "atexit", "\nError : Could not set AtExit\n")
 
     queue = createQueue();
+
+    init_multicast();
 
     init_TCP();
 

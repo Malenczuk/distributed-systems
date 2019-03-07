@@ -1,7 +1,14 @@
-#include <stdio.h>
 #include <stdlib.h>
-#include <popt.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/socket.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
+#include <string.h>
+#include <pthread.h>
+#include <signal.h>
+#include <popt.h>
+#include <sys/epoll.h>
 #include "config.h"
 
 void load_arguments(int argc, char **argv) {

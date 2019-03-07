@@ -1,13 +1,4 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <string.h>
-#include <pthread.h>
-#include <signal.h>
-#include "config.h"
+#include "config.c"
 #include "TokenRing.h"
 
 QNode* newNode(token t)

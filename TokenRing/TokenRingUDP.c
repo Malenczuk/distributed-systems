@@ -1,13 +1,3 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <string.h>
-#include <pthread.h>
-#include <signal.h>
-#include "config.c"
 #include "TokenRing.c"
 #include "TokenRingUDP.h"
 
@@ -31,7 +21,9 @@ void handle_token() {
 
     while (1) {
         struct sockaddr_in addr = recieve_token(&token);
-        print_token(token);
+        send_multicast(ID, strlen(ID));
+
+        sleep(1);
         switch (token.token) {
             case EMPTY:
                 handle_empty();
@@ -120,7 +112,7 @@ void handle_data(token token) {
         token.token = CONFIRM;
     } else if (strcmp(token.source, ID) == 0) {
         if ((token.TTL -= 1) <= 0) {
-            printf("TTL expired\n");
+            printf("Message wasn't delivered\n");
             token = empty_token();
         }
     }
@@ -130,6 +122,7 @@ void handle_data(token token) {
 
 void handle_confirm(token token) {
     if (strcmp(token.source, ID) == 0) {
+        printf("Message was delivered successfully\n");
         token = empty_token();
     }
     send_token(token);
@@ -164,6 +157,7 @@ void connect_tokenring() {
 
 void disconnect_tokenring() {
     struct swap swap;
+    bzero(&swap, sizeof(swap));
     strcpy(swap.new_ip, OUT_IP);
     swap.new_port = OUT_PORT;
     swap.old_port = LOCAL_PORT;
