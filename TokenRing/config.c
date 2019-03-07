@@ -2,17 +2,7 @@
 #include <stdlib.h>
 #include <popt.h>
 #include <netinet/in.h>
-
-typedef enum {
-    UDP = 1, TCP = 2
-}protocol;
-
-protocol PROTOCOL = -1;
-char *ID = NULL;
-char *OUT_IP = NULL;
-uint16_t LOCAL_PORT = 0;
-uint16_t OUT_PORT = 0;
-char TOKEN = 0;
+#include "config.h"
 
 void load_arguments(int argc, char **argv) {
     int protocol = 3;

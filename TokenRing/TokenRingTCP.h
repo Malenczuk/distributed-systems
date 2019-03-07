@@ -4,36 +4,11 @@
 #define MCAST_GRP "224.1.1.1"
 #define MCAST_PORT 5007
 
-typedef enum {
-    EMPTY, CONNECT, DISCONNECT, DATA, CONFIRM, REMAP
-} type;
-
-const char* typeNames[] = {"EMPTY", "CONNECT", "DISCONNECT", "DATA", "CONFIRM", "REMAP" };
-
-typedef struct {
-    type token;
-    unsigned char TTL;
-    char destination[128];
-    char source[128];
-    char data[1024];
-} token;
-
-struct swap{
-    char old_ip[16];
-    uint16_t old_port;
-    char new_ip[16];
-    uint16_t new_port;
-};
-
-token empty_token();
-
-token create_token(type type, unsigned char TTL, char *source, char *destination, void *data, int len);
-
-void print_token(token token);
+void handle_token(int socket);
 
 void send_token(token token);
 
-void handle_token(int socket);
+struct sockaddr_in recieve_token(int socket, token *token);
 
 void handle_empty();
 
@@ -55,12 +30,12 @@ void connect_session();
 
 void connect_tokenring();
 
-void init();
+void init(int argc, char **argv);
+
+void init_TCP();
+
+void init_epoll();
 
 void del();
-
-void init_multicast();
-
-void send_multicast(void *message, int size);
 
 #endif //TOKENRING_TOKENRINGTCP_H

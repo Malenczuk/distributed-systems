@@ -4,6 +4,15 @@
 #define MCAST_GRP "224.1.1.1"
 #define MCAST_PORT 5007
 
+#define FAILURE_EXIT(code, perr, format, ...) { if(format) fprintf(stdout, format, ##__VA_ARGS__); if(perr) perror(perr); exit(code);}
+
+
+int MCAST_SOCKET = 0;
+int SOCKET[2] = {0, 0};
+pthread_t command;
+pthread_mutex_t queue_mutex = PTHREAD_MUTEX_INITIALIZER;
+struct Queue *queue;
+
 typedef enum {
     EMPTY, CONNECT, DISCONNECT, DATA, CONFIRM, REMAP
 } type;
@@ -25,19 +34,28 @@ struct swap{
     uint16_t new_port;
 };
 
-void loop();
+typedef struct QNode
+{
+    token token;
+    struct QNode *next;
+}QNode;
 
-void handle_empty();
+typedef struct Queue
+{
+    QNode *front, *rear;
+}Queue;
 
-void handle_connect(token token, struct sockaddr_in addr);
+QNode* newNode(token t);
 
-void handle_disconnect(token token, struct sockaddr_in addr);
+Queue* createQueue();
 
-void handle_data(token token, struct sockaddr_in addr);
+void enQueue(Queue *q, token t);
 
-void handle_confirm(token token, struct sockaddr_in addr);
+QNode* deQueue(Queue *q);
 
-void handle_remap(token token, struct sockaddr_in addr);
+void start_command_routine();
+
+void *command_routine();
 
 void init_multicast();
 
@@ -49,26 +67,6 @@ token create_token(type type, unsigned char TTL, char *source, char *destination
 
 void print_token(token token);
 
-void tokenring_connect();
-
-void tokenring_disconnect();
-
-void init(int argc, char **argv);
-
-void init_TCP();
-
-void connect_TCP();
-
-void *accept_TCP(void *x_void_ptr);
-
-void init_UDP();
-
 void send_token(token token);
-
-struct sockaddr_in recieve_token(token *token);
-
-void send_token_TCP(token token);
-
-void send_token_UDP(token token);
 
  #endif //TOKENRING_TOKENRING_H
