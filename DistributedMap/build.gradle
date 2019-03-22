@@ -1,0 +1,18 @@
+plugins {
+    id 'java'
+}
+
+group 'pl.edu.agh.dsrg.sr'
+version '1.0'
+
+sourceCompatibility = 11
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+dependencies {
+    compile fileTree(include: ['*.jar'], dir: 'lib')
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+}
