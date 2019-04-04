@@ -39,6 +39,7 @@ public class Receiver extends ReceiverAdapter {
     public void viewAccepted(View view) {
         System.out.println("received view " + view);
         if (view instanceof MergeView) {
+            System.out.println("Merge");
             ViewHandler handler = new ViewHandler(channel, (MergeView) view);
             handler.start();
         }

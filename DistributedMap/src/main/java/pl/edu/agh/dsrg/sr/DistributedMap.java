@@ -40,7 +40,8 @@ public class DistributedMap implements SimpleStringMap {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return localCopy.put(key, value);
+        localCopy.put(key, value);
+        return value;
     }
 
     @Override

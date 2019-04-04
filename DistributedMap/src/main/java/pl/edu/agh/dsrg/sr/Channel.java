@@ -14,7 +14,7 @@ public class Channel extends JChannel {
         super(false);
         ProtocolStack stack = new ProtocolStack();
         this.setProtocolStack(stack);
-        stack.addProtocol(new UDP().setValue("mcast_group_addr", InetAddress.getByName("230.100.213.7")))
+        stack.addProtocol(new UDP().setValue("mcast_group_addr", InetAddress.getByName("230.100.213.1")))
                 .addProtocol(new PING())
                 .addProtocol(new MERGE3())
                 .addProtocol(new FD_SOCK())
@@ -31,8 +31,8 @@ public class Channel extends JChannel {
                 .addProtocol(new MFC())
                 .addProtocol(new FRAG2())
                 .addProtocol(new STATE())
-                .addProtocol(new SEQUENCER())
-                .addProtocol(new FLUSH());
+                .addProtocol(new SEQUENCER());
+
 
         stack.init();
     }

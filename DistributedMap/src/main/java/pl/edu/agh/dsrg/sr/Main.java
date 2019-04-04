@@ -20,18 +20,19 @@ public class Main {
 
     public static Object execute(DistributedMap map, String msg) {
         var cmd = DistributedMap.parseCommand(msg);
-
-        switch (cmd.getVal1()){
-            case "put":
-                if(cmd.getVal3() != null)
-                    return map.put(cmd.getVal2(), cmd.getVal3());
-                break;
-            case "get":
-                return map.get(cmd.getVal2());
-            case "remove":
-                return map.remove(cmd.getVal2());
-            case "containsKey":
-                return map.containsKey(cmd.getVal2());
+        if (cmd.getVal1() != null) {
+            switch (cmd.getVal1()) {
+                case "put":
+                    if (cmd.getVal3() != null)
+                        return map.put(cmd.getVal2(), cmd.getVal3());
+                    break;
+                case "get":
+                    return map.get(cmd.getVal2());
+                case "remove":
+                    return map.remove(cmd.getVal2());
+                case "containsKey":
+                    return map.containsKey(cmd.getVal2());
+            }
         }
         return "Wrong Command";
     }
