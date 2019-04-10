@@ -75,7 +75,7 @@ defmodule Worker do
     config =
       apply(module, :init, [])
       |> Keyword.merge(config)
-    Logger.info("#{inspect(config)}")
+    Logger.debug("#{inspect(config)}")
     state =
       initial_state
       |> Map.put(:config, config)

@@ -60,14 +60,14 @@ defmodule Administrator do
     ]
   end
 
-  def handle_message(%Message{attributes: attributes, state: %{config: config}} = message) do
-    name = config[:name]
+  def handle_message(%Message{attributes: attributes, state: %{config: config, module: module}} = message) do
+    name = Atom.to_string(config[:name])
     admin_exchange = config[:admin_exchange]
     case attributes.exchange do
       ^admin_exchange ->
-        Logger.info("[#{name}] Received log: #{message.payload}")
+        Logger.info("[#{module}][#{name}] Received log: #{message.payload}")
       _ ->
-        Logger.info("[#{name}] Received message: #{inspect(message)}")
+        Logger.info("[#{module}][#{name}] Received message: #{inspect(message)}")
     end
     ack(message)
   rescue

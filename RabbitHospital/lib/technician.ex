@@ -51,23 +51,24 @@ defmodule Technician do
       spec: ["knee", "elbow"]
     ]
   end
-  def handle_message(%Message{attributes: attributes, state: %{chan: chan, config: config}} = message) do
-    name = config[:name]
+
+  def handle_message(%Message{attributes: attributes, state: %{chan: chan, config: config, module: module}} = message) do
+    name = Atom.to_string(config[:name])
     hospital_exchange = config[:hospital_exchange]
     admin_exchange = config[:admin_exchange]
     case attributes.exchange do
       ^hospital_exchange ->
-        Logger.info("[#{name}] Received #{attributes.routing_key} request: #{message.payload}")
+        Logger.info("[#{module}][#{name}] Received #{attributes.routing_key} request: #{message.payload}")
         :rand.uniform(4) |> Kernel.*(1000) |> :timer.sleep
         response = "#{message.payload} #{attributes.routing_key} done"
-        Logger.info("[#{name}] Diagnose: #{response}")
+        Logger.info("[#{module}][#{name}] Diagnose: #{response}")
         ack(message)
         publish_and_log(chan, attributes.reply_to, response, config)
       ^admin_exchange ->
-        Logger.info("[#{name}] Received info: #{message.payload}")
+        Logger.info("[#{module}][#{name}] Received info: #{message.payload}")
         ack(message)
       _ ->
-        Logger.info("[#{name}] Received message: #{inspect(message)}")
+        Logger.info("[#{module}][#{name}] Received message: #{inspect(message)}")
         ack(message)
     end
 
