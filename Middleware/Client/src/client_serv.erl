@@ -70,7 +70,7 @@ init([]) ->
 
   {ok, [{"Account_Creator", Account_Creator},
     {"Standard_Manager", Standard_Manager},
-    {"Premium_Manager", Premium_Manager}]} = thrift_client_util:new_multiplexed("127.0.0.1", Port, Services, [{framed, true}]),
+    {"Premium_Manager", Premium_Manager}]} = thrift_client_util:new_multiplexed("127.0.0.1", Port, Services, []),
 
   {ok, #state{account_creator = Account_Creator, standard_manager = Standard_Manager, premium_manager = Premium_Manager}}.
 

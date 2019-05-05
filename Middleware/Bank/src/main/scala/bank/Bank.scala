@@ -23,7 +23,7 @@ class Bank() {
     )
 
     val address = new InetSocketAddress(InetAddress.getLoopbackAddress, bankPort)
-    server = Thrift.server.serveIfaces(address, serviceMap)
+    server = Thrift.server.withBufferedTransport().serveIfaces(address, serviceMap)
 
     sys.addShutdownHook {
       System.err.println("*** shutting down Thrift server since JVM is shutting down")
