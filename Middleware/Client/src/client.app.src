@@ -1,0 +1,13 @@
+{application, client,
+ [
+  {description, ""},
+  {vsn, "1"},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib,
+                  thrift
+                 ]},
+  {mod, { client_app, []}},
+  {env, []}
+ ]}.
