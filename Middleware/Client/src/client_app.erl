@@ -53,11 +53,11 @@ get_balance() ->
   end.
 
 get_balance(Uid, Guid, 'PREMIUM') ->
-  Auth = #'Auth'{uid = #'UID'{value = Uid}, guid = #'GUID'{value = Guid}},
+  Auth = #'Auth'{uid = #'UID'{value = Uid}, guid = #'GUID'{value = md5(Guid)}},
   gen_server:call(client_serv, {get_balance_premium, [Auth]});
 
 get_balance(Uid, Guid, 'STANDARD') ->
-  Auth = #'Auth'{uid = #'UID'{value = Uid}, guid = #'GUID'{value = Guid}},
+  Auth = #'Auth'{uid = #'UID'{value = Uid}, guid = #'GUID'{value = md5(Guid)}},
   gen_server:call(client_serv, {get_balance_standard, [Auth]}).
 
 get_loan_cost() ->
@@ -70,7 +70,7 @@ get_loan_cost() ->
 get_loan_cost(Uid, Guid, Amount, Currency, Period) ->
   case lists:keyfind(Currency, 1, bank_types:enum_info('CurrencyCode')) of
     {_, Code} ->
-      Auth = #'Auth'{uid = #'UID'{value = Uid}, guid = #'GUID'{value = Guid}},
+      Auth = #'Auth'{uid = #'UID'{value = Uid}, guid = #'GUID'{value =  md5(Guid)}},
       Request = #'LoanRequest'{amount = #'Money'{value = Amount}, currency = Code, period = #'Period'{months = Period}},
       gen_server:call(client_serv, {get_loan_cost, [Auth, Request]});
     false -> {error, wrong_currency_code}
@@ -91,3 +91,6 @@ stop(_State) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
+
+md5(S) ->
+  lists:flatten([io_lib:format("~2.16.0b",[N]) || <<N>> <= erlang:md5(S)]).

@@ -1,5 +1,7 @@
 package bank
 
+import java.security.MessageDigest
+
 import currency.CurrencyAdapter._
 import currency.exchange.CurrencyExchangeClient
 
@@ -24,8 +26,10 @@ class BankDatabase(currencyCodes: Seq[CurrencyCode], exchangePort: Int) {
 
   def getAuthBankClient(auth: Auth): Either[InvalidAuthError, BankClient] = {
     getBankClient(auth.uid) match {
-      case Right(client) if client.guid == auth.guid => Right(client)
-      case Right(_) => Left(InvalidAuthError(auth, "Incorrect GUID"))
+      case Right(client) if md5(client.guid.value) == auth.guid.value => Right(client)
+      case Right(client) =>
+        println(md5(client.guid.value))
+        Left(InvalidAuthError(auth, "Incorrect GUID"))
       case Left(error) => Left(InvalidAuthError(auth, error.reason))
     }
   }
@@ -51,6 +55,10 @@ class BankDatabase(currencyCodes: Seq[CurrencyCode], exchangePort: Int) {
     } else {
       Left(InvalidRequestError(request, "Not a Premium client"))
     }
+  }
+
+  def md5(s: String): String = {
+    MessageDigest.getInstance("MD5").digest(s.getBytes).map("%02x".format(_)).mkString
   }
 
   def getRate(code: CurrencyCode): Option[Double] = exchangeClient.rates.get(code)

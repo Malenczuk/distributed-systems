@@ -9,21 +9,22 @@ import com.twitter.finagle.{ListeningServer, Thrift}
 
 
 class Bank() {
-  val bankPort: Int = 9090
+  val bankAddress = new InetSocketAddress(InetAddress.getLoopbackAddress, 9090)
+  val accountAddress = new InetSocketAddress(InetAddress.getLoopbackAddress, 9091)
   val exchangePort: Int = 50051
   implicit val bankCurrencies: Seq[CurrencyCode] = Seq(Pln, Usd, Eur)
   implicit val bankDatabase: BankDatabase = new BankDatabase(bankCurrencies, exchangePort)
-  private var server: ListeningServer = _
+  private var accountServer: ListeningServer = _
+  private var bankServer: ListeningServer = _
 
   def start(): Unit = {
     val serviceMap: Map[String, ThriftService] = Map(
-      "Account_Creator" -> new AccountCreatorService(),
       "Standard_Manager" -> new StandardManagerService(),
       "Premium_Manager" -> new PremiumManagerService()
     )
 
-    val address = new InetSocketAddress(InetAddress.getLoopbackAddress, bankPort)
-    server = Thrift.server.withBufferedTransport().serveIfaces(address, serviceMap)
+    accountServer = Thrift.server.withBufferedTransport().serveIface(accountAddress, new AccountCreatorService())
+    bankServer = Thrift.server.withBufferedTransport().serveIfaces(bankAddress, serviceMap)
 
     sys.addShutdownHook {
       System.err.println("*** shutting down Thrift server since JVM is shutting down")
@@ -33,8 +34,11 @@ class Bank() {
   }
 
   private def stop(): Unit = {
-    if (server != null) {
-      server.close()
+    if (bankServer != null) {
+      bankServer.close()
+    }
+    if (accountServer != null) {
+      accountServer.close()
     }
   }
 }

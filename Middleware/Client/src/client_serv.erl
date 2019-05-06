@@ -61,16 +61,17 @@ start_link() ->
   {ok, State :: #state{}} | {ok, State :: #state{}, timeout() | hibernate} |
   {stop, Reason :: term()} | ignore).
 init([]) ->
-  Port = 9090,
+  BankPort = 9090,
+  AccountPort = 9091,
   Services = [
-    {"Account_Creator", account_creator_thrift},
     {"Standard_Manager", standard_manager_thrift},
     {"Premium_Manager", premium_manager_thrift}
   ],
 
-  {ok, [{"Account_Creator", Account_Creator},
-    {"Standard_Manager", Standard_Manager},
-    {"Premium_Manager", Premium_Manager}]} = thrift_client_util:new_multiplexed("127.0.0.1", Port, Services, []),
+  {ok, Account_Creator} = thrift_client_util:new("127.0.0.1", AccountPort, account_creator_thrift, []),
+
+  {ok, [{"Standard_Manager", Standard_Manager},
+    {"Premium_Manager", Premium_Manager}]} = thrift_client_util:new_multiplexed("127.0.0.1", BankPort, Services, []),
 
   {ok, #state{account_creator = Account_Creator, standard_manager = Standard_Manager, premium_manager = Premium_Manager}}.
 
