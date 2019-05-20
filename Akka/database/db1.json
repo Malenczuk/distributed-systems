@@ -1,0 +1,22 @@
+[
+  {
+    "title": "Pride and Prejudice",
+    "price": 15,
+    "file": "Pride and Prejudice.txt"
+  },
+  {
+    "title": "Hitchhiker's guide to the Galaxy",
+    "price": 20,
+    "file": ""
+  },
+  {
+    "title": "The colour of magic",
+    "price": 12,
+    "file": ""
+  },
+  {
+    "title": "Shogun",
+    "price": 50,
+    "file": ""
+  }
+]
