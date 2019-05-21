@@ -12,7 +12,7 @@ class DatabaseManager extends Actor with ActorLogging {
       case _ => Stop
     }
 
-  val databases: List[String] = List("database/db4.json", "database/db3.json")
+  val databases: List[String] = List("database/db1.json", "database/db2.json")
 
   override def receive: Receive = {
     case request: SearchRequest =>
