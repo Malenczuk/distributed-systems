@@ -1,6 +1,6 @@
 package library.server
 
-import akka.actor.SupervisorStrategy.Stop
+import akka.actor.SupervisorStrategy.Restart
 import akka.actor.{Actor, ActorLogging, ActorSystem, OneForOneStrategy, Props}
 import com.typesafe.config.{Config, ConfigFactory}
 import library._
@@ -13,8 +13,8 @@ import scala.io.StdIn
 
 class Server extends Actor with ActorLogging {
   override val supervisorStrategy: OneForOneStrategy =
-    OneForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 1 minute) {
-      case _ => Stop
+    OneForOneStrategy(maxNrOfRetries = 5, withinTimeRange = 10 seconds) {
+      case _ => Restart
     }
   private val databaseManager = context.actorOf(Props[DatabaseManager], name = "databaseManager")
   private val orderManager = context.actorOf(Props[OrderManager], name = "orderManager")

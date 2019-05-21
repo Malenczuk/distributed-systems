@@ -1,21 +1,19 @@
 package library.server.database
 
-import java.io.FileNotFoundException
-
-import akka.actor.SupervisorStrategy.{Restart, Stop}
+import akka.actor.SupervisorStrategy.Stop
 import akka.actor.{Actor, ActorLogging, ActorRef, OneForOneStrategy, Props}
 import library._
+import monix.execution.atomic.AtomicInt
 
 import scala.concurrent.duration._
 
-class DatabaseWorker extends Actor with ActorLogging {
+class DatabaseWorker(val databases: Seq[String]) extends Actor with ActorLogging {
   override val supervisorStrategy: OneForOneStrategy =
-    OneForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 1 minute) {
-      case _: FileNotFoundException => Stop
-      case _ => Restart
+    OneForOneStrategy(maxNrOfRetries = 5, withinTimeRange = 10 seconds) {
+      case _ => Stop
     }
+  val counter: AtomicInt = AtomicInt(databases.size)
 
-  val databases: List[String] = List("database/db1.json", "database/db2.json")
 
   override def postStop(): Unit = {
     context.children.foreach(context.stop)
@@ -29,8 +27,8 @@ class DatabaseWorker extends Actor with ActorLogging {
   }
 
   def receive(client: ActorRef): Receive = {
-    case SearchResponse(None) if context.children.size > 1 =>
-      context.stop(sender)
+    case SearchResponse(None) if counter.get > 1 =>
+      counter.decrement(1)
     case response: SearchResponse =>
       client ! response
       context.stop(self)

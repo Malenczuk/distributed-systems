@@ -7,7 +7,7 @@ import net.liftweb.json._
 import scala.io.Source
 
 class SearchDatabaseWorker(val database: String) extends Actor with ActorLogging {
-  implicit val formats = DefaultFormats
+  implicit val formats: DefaultFormats = DefaultFormats
 
   override def postStop: Unit = {
     context.parent ! SearchResponse(None)

@@ -1,8 +1,7 @@
 package library.server.order
 
-import java.nio.file.NoSuchFileException
 
-import akka.actor.SupervisorStrategy.{Escalate, Restart}
+import akka.actor.SupervisorStrategy.Stop
 import akka.actor.{Actor, ActorLogging, OneForOneStrategy, Props}
 import library.OrderRequest
 
@@ -10,9 +9,8 @@ import scala.concurrent.duration._
 
 class OrderManager extends Actor with ActorLogging {
   override val supervisorStrategy: OneForOneStrategy =
-    OneForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 1 minute) {
-      case _: NoSuchFileException => Escalate
-      case _ => Restart
+    OneForOneStrategy(maxNrOfRetries = 5, withinTimeRange = 10 seconds) {
+      case _ => Stop
     }
 
   override def receive: Receive = {
