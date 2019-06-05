@@ -17,6 +17,7 @@ public class DataMonitor implements Watcher, AsyncCallback.StatCallback {
     private final Watcher chainedWatcher;
     private final DataMonitorListener listener;
 
+    private ChildrenWatcher childrenWatcher = null;
     private byte[] prevData;
     private boolean dead = false;
 
@@ -75,7 +76,7 @@ public class DataMonitor implements Watcher, AsyncCallback.StatCallback {
                 case SyncConnected:
                     try {
                         Stat stat = zk.exists(znode, false);
-                        if (stat != null) watchChildren(znode);
+                        if (stat != null && childrenWatcher == null) watchChildren(znode);
                     } catch (KeeperException | InterruptedException e) {
                         log.error(e.getMessage());
                     }
@@ -87,12 +88,6 @@ public class DataMonitor implements Watcher, AsyncCallback.StatCallback {
             }
         } else if (path != null && path.equals(znode)) {
             zk.exists(znode, true, this, null);
-
-            try {
-                if (event.getType() == Event.EventType.NodeCreated) watchChildren(znode);
-            } catch (KeeperException | InterruptedException e) {
-                log.error(e.getMessage());
-            }
         }
 
         if (chainedWatcher != null) {
@@ -106,7 +101,9 @@ public class DataMonitor implements Watcher, AsyncCallback.StatCallback {
     }
 
     private void watchChildren(String node) throws KeeperException, InterruptedException {
-        zk.getChildren(node, new ChildrenWatcher(zk, node));
+        log.info(childrenWatcher);
+        childrenWatcher = new ChildrenWatcher(zk, node);
+        zk.getChildren(node, childrenWatcher);
     }
 
     interface DataMonitorListener {
