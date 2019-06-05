@@ -75,7 +75,7 @@ public class Executor implements Watcher, Runnable, DataMonitor.DataMonitorListe
                 }
             }
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            log.error(e.getMessage());
         }
     }
 

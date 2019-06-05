@@ -25,7 +25,6 @@ public class Printer {
         if (stat != null) printTree(node, 0, sb);
 
         return sb.toString();
-
     }
 
     private void printTree(String node, int indent, StringBuilder sb) {
