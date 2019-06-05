@@ -6,7 +6,8 @@ import org.apache.zookeeper.data.Stat;
 
 import java.util.Arrays;
 
-import static org.apache.zookeeper.KeeperException.Code.*;
+import static org.apache.zookeeper.KeeperException.Code.SESSIONEXPIRED;
+import static org.apache.zookeeper.KeeperException.Code.get;
 
 public class DataMonitor implements Watcher, AsyncCallback.StatCallback {
 
@@ -84,15 +85,13 @@ public class DataMonitor implements Watcher, AsyncCallback.StatCallback {
                     listener.closing(SESSIONEXPIRED.intValue());
                     break;
             }
-        } else {
-            if (path != null && path.equals(znode)) {
-                zk.exists(znode, true, this, null);
+        } else if (path != null && path.equals(znode)) {
+            zk.exists(znode, true, this, null);
 
-                try {
-                    if (event.getType() == Event.EventType.NodeCreated) watchChildren(znode);
-                } catch (KeeperException | InterruptedException e) {
-                    log.error(e.getMessage());
-                }
+            try {
+                if (event.getType() == Event.EventType.NodeCreated) watchChildren(znode);
+            } catch (KeeperException | InterruptedException e) {
+                log.error(e.getMessage());
             }
         }
 
